@@ -1,4 +1,3 @@
-
 # ------------------------------------------------------------------------------
 # Copyright (c) Microsoft
 # Licensed under the MIT License.
@@ -12,7 +11,6 @@ from __future__ import print_function
 import os
 
 from yacs.config import CfgNode as CN
-
 
 _C = CN()
 
@@ -38,7 +36,6 @@ _C.MODEL.PRETRAINED = ''
 _C.MODEL.ALIGN_CORNERS = True
 _C.MODEL.NUM_OUTPUTS = 1
 _C.MODEL.EXTRA = CN(new_allowed=True)
-
 
 _C.MODEL.OCR = CN()
 _C.MODEL.OCR.MID_CHANNELS = 512
@@ -127,10 +124,20 @@ _C.DEBUG.SAVE_BATCH_IMAGES_PRED = False
 _C.DEBUG.SAVE_HEATMAPS_GT = False
 _C.DEBUG.SAVE_HEATMAPS_PRED = False
 
+# NEW:
+_C.TRAIN.LR_MIN = None
+_C.DATASET.CLASS_NAMES = None
+_C.DATASET.TEST_CROP_INFO_PATH = None
+_C.DATASET.MEAN = [116.513, 56.437, 16.309]
+_C.DATASET.STD = [80.206, 41.232, 13.293]
+_C.TRAIN.RATIO_RANGE = [0.5, 2.0]
+_C.TRAIN.CROP_SIZE = [1200, 1440]
+_C.TRAIN.ROTATE = True
+# END NEW
 
 def update_config(cfg, args):
     cfg.defrost()
-    
+
     cfg.merge_from_file(args.cfg)
     cfg.merge_from_list(args.opts)
 
@@ -139,6 +146,6 @@ def update_config(cfg, args):
 
 if __name__ == '__main__':
     import sys
+
     with open(sys.argv[1], 'w') as f:
         print(_C, file=f)
-

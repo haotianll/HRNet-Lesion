@@ -311,7 +311,7 @@ class HighResolutionNet(nn.Module):
             pre_stage_channels, num_channels)
         self.stage4, pre_stage_channels = self._make_stage(
             self.stage4_cfg, num_channels, multi_scale_output=True)
-        
+
         last_inp_channels = np.int(np.sum(pre_stage_channels))
 
         self.last_layer = nn.Sequential(
@@ -320,7 +320,9 @@ class HighResolutionNet(nn.Module):
                 out_channels=last_inp_channels,
                 kernel_size=1,
                 stride=1,
-                padding=0),
+                padding=0,
+                bias=False  # bias=False is used in mmsegmentation
+            ),
             BatchNorm2d(last_inp_channels, momentum=BN_MOMENTUM),
             nn.ReLU(inplace=relu_inplace),
             nn.Conv2d(

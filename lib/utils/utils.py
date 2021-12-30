@@ -32,8 +32,11 @@ class FullModel(nn.Module):
 
   def forward(self, inputs, labels, *args, **kwargs):
     outputs = self.model(inputs, *args, **kwargs)
-    loss = self.loss(outputs, labels)
-    return torch.unsqueeze(loss,0), outputs
+    if labels is not None:
+        loss = self.loss(outputs, labels)
+        return torch.unsqueeze(loss,0), outputs
+    else:
+        return 0, outputs
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -129,7 +132,7 @@ def get_confusion_matrix(label, pred, size, num_class, ignore=-1):
                                  i_pred] = label_count[cur_index]
     return confusion_matrix
 
-def adjust_learning_rate(optimizer, base_lr, max_iters, 
+def adjust_learning_rate(optimizer, base_lr, max_iters,
         cur_iters, power=0.9, nbb_mult=10):
     lr = base_lr*((1-float(cur_iters)/max_iters)**(power))
     optimizer.param_groups[0]['lr'] = lr
