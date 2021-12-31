@@ -145,7 +145,7 @@ def evaluate(config, testloader, model, test_dataset, writer_dict=None):
         for i, batch in enumerate(testloader):
             idx = dist.get_world_size() * i + dist.get_rank()
 
-            image, label, image_size, image_name = batch
+            image, label, image_size, image_name, info_dict = batch
             image = image.cuda()
             label = label.long().cuda()
 
@@ -165,8 +165,17 @@ def evaluate(config, testloader, model, test_dataset, writer_dict=None):
             if idx >= len(test_dataset):
                 continue
 
+            if info_dict['pad_shape'] is not None:
+                x = F.interpolate(x, size=info_dict['pad_shape'][:2], mode='bilinear', align_corners=False)
+                h, w, _ = info_dict['input_shape']
+                x = x[:, :, :h, :w]
+            else:
+                # 类似于mmsegmentation，先插值到输入图片的大小
+                x = F.interpolate(x, size=info_dict['input_shape'][:2], mode='bilinear', align_corners=False)
+
+            # 插值到完整标签的大小
             size = (image_size[0][0].item(), image_size[0][1].item())
-            x = F.interpolate(input=x, size=size, mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS)
+            x = F.interpolate(input=x, size=size, mode='bilinear', align_corners=False)
             pred = torch.sigmoid(x).detach().cpu().numpy()[0]
 
             if crop_info_dataset:

@@ -82,6 +82,7 @@ def main():
         flip=False,
         ignore_label=config.TRAIN.IGNORE_LABEL,
         image_scale=config.TEST.IMAGE_SIZE,
+        pad_size=config.TEST.PAD_SIZE,
         mean=config.DATASET.MEAN,
         std=config.DATASET.STD,
         base_size=config.TEST.BASE_SIZE,
@@ -91,7 +92,7 @@ def main():
     test_sampler = get_sampler(test_dataset, shuffle=False)
     testloader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=1,
         shuffle=False,
         num_workers=config.WORKERS,
         pin_memory=True,

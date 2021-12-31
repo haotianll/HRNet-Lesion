@@ -67,7 +67,7 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr, num_iters, trainloader
     global_steps = writer_dict['train_global_steps']
 
     for i_iter, batch in enumerate(trainloader, 0):
-        images, labels, _, _ = batch
+        images, labels, _, _, _ = batch
         images = images.cuda()
         labels = labels.long().cuda()
 
@@ -214,6 +214,7 @@ def main():
         flip=False,
         ignore_label=config.TRAIN.IGNORE_LABEL,
         image_scale=config.TEST.IMAGE_SIZE,
+        pad_size=config.TEST.PAD_SIZE,
         mean=config.DATASET.MEAN,
         std=config.DATASET.STD,
         base_size=config.TEST.BASE_SIZE,
@@ -223,7 +224,7 @@ def main():
     test_sampler = get_sampler(test_dataset, shuffle=False)
     testloader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=1,
         shuffle=False,
         num_workers=config.WORKERS,
         pin_memory=True,
@@ -302,7 +303,7 @@ def main():
         if current_trainloader.sampler is not None and hasattr(current_trainloader.sampler, 'set_epoch'):
             current_trainloader.sampler.set_epoch(epoch)
 
-        if (epoch + 1) % 75 == 0:
+        if (epoch + 1) % config.TRAIN.EVAL_INTERVAL == 0:
             valid_loss, results, result_str = evaluate(config, testloader, model, test_dataset, writer_dict)
             if args.local_rank <= 0:
                 logging.info('Eval Loss: {:.3f}'.format(valid_loss))
@@ -325,7 +326,7 @@ def main():
                 'epoch': epoch + 1,
                 'state_dict': model.module.state_dict(),
                 'optimizer': optimizer.state_dict(),
-            }, os.path.join(final_output_dir, f'epoch_{epoch + 1}.pth'))
+            }, os.path.join(final_output_dir, f'epoch_{epoch + 1}.pth.tar'))
 
     valid_loss, results, result_str = evaluate(config, testloader, model, test_dataset, writer_dict)
     if args.local_rank <= 0:

@@ -20,6 +20,7 @@ class LesionDataset(BaseDataset):
                  image_scale=(1200, 1440),
                  ratio_range=(0.5, 2.0),
                  crop_size=(1200, 1440),
+                 pad_size=None,
                  ignore_label=-1,
                  downsample_rate=1,
                  scale_factor=16,
@@ -46,7 +47,11 @@ class LesionDataset(BaseDataset):
         self.image_scale = image_scale
         self.ratio_range = ratio_range
         self.crop_size = crop_size
-        self.pad_size = self.crop_size  # CHECK THIS
+
+        if pad_size is None and self.crop_size is not None:
+            self.pad_size = self.crop_size  # CHECK THIS
+        else:
+            self.pad_size = pad_size
 
         self.multi_scale = multi_scale
         self.flip = flip
@@ -76,14 +81,30 @@ class LesionDataset(BaseDataset):
 
         label = np.array(Image.open(os.path.join(self.root, item["label"])).convert('P'))
 
+        info_dict = {
+            'filename': item['name'],
+            'image_path': os.path.join(self.root, item['img']),
+            'label_path': os.path.join(self.root, item['label']),
+            'origin_shape': image.shape
+        }
         if self.split != 'train':
             image = self.random_scale(image, label=None, ratio_range=None)
             image = self.normalize(image, self.mean, self.std, to_rgb=True)
-            image = image.transpose((2, 0, 1))
-            return image.copy(), label.copy(), np.array(size), name
+            info_dict['input_shape'] = image.shape
 
-        image, label = self.generate_sample(image, label)
-        return image.copy(), label.copy(), np.array(size), name
+            if self.pad_size is not None:
+                h, w = image.shape[:2]
+                image = self.pad_image(image, h, w, self.pad_size, (0,))
+                info_dict['pad_shape'] = image.shape
+            else:
+                info_dict['pad_shape'] = None
+
+            image = image.transpose((2, 0, 1))
+            return image.copy(), label.copy(), np.array(size), name, info_dict
+
+        image, label, info = self.generate_sample(image, label)
+        info_dict['input_shape'], info_dict['pad_shape'] = info
+        return image.copy(), label.copy(), np.array(size), name, info_dict
 
     def random_scale(self, image, label=None, ratio_range=None):
         if ratio_range is not None:
@@ -234,8 +255,11 @@ class LesionDataset(BaseDataset):
         image = self.normalize(image, self.mean, self.std, to_rgb=True)
         label = self.label_transform(label)
 
+        input_shape = image.shape
+
         # 'Pad', size=(1200, 1440), pad_val=0, seg_pad_val=0
         image, label = self.pad(image, label, self.pad_size, pad_val=0, seg_pad_val=0)
+        pad_shape = image.shape
 
         image = image.transpose((2, 0, 1))
 
@@ -243,4 +267,4 @@ class LesionDataset(BaseDataset):
             label = cv2.resize(label, None, fx=self.downsample_rate, fy=self.downsample_rate,
                                interpolation=cv2.INTER_NEAREST)
 
-        return image, label
+        return image, label, (input_shape, pad_shape)
