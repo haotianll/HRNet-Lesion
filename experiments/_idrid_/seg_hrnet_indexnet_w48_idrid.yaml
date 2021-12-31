@@ -83,7 +83,7 @@ TRAIN:
   IMAGE_SIZE: [ 1200, 1440 ]
   MULTI_SCALE: true
   RATIO_RANGE: [ 0.5, 2.0 ]
-  CROP_SIZE:  [ 1120, 1344 ] # [ 1120, 1344 ]
+  CROP_SIZE:  [ 1120, 1344 ]
   FLIP: true
   ROTATE: true
   BEGIN_EPOCH: 0

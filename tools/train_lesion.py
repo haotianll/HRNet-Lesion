@@ -139,8 +139,10 @@ def main():
 
     if distributed:
         batch_size = config.TRAIN.BATCH_SIZE_PER_GPU
+        test_batch_size = config.TEST.BATCH_SIZE_PER_GPU
     else:
         batch_size = config.TRAIN.BATCH_SIZE_PER_GPU * len(gpus)
+        test_batch_size = config.TEST.BATCH_SIZE_PER_GPU * len(gpus)
 
     # prepare data
     train_dataset = eval('datasets.' + config.DATASET.DATASET)(
@@ -224,7 +226,7 @@ def main():
     test_sampler = get_sampler(test_dataset, shuffle=False)
     testloader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=1,
+        batch_size=test_batch_size,
         shuffle=False,
         num_workers=config.WORKERS,
         pin_memory=True,
