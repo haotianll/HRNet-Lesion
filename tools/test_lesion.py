@@ -118,8 +118,10 @@ def main():
 
     if os.path.isfile(args.checkpoint):
         checkpoint = torch.load(args.checkpoint, map_location={'cuda:0': 'cpu'})
+        if 'state_dict' in checkpoint.keys():
+            checkpoint = checkpoint['state_dict']
         model.module.model.load_state_dict(
-            {k.replace('model.', ''): v for k, v in checkpoint['state_dict'].items() if k.startswith('model.')})
+            {k.replace('model.', ''): v for k, v in checkpoint.items() if k.startswith('model.')})
         logger.info("=> loaded checkpoint: {}".format(args.checkpoint))
         if distributed:
             torch.distributed.barrier()
