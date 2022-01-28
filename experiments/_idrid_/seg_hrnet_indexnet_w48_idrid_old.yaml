@@ -1,0 +1,111 @@
+CUDNN:
+  BENCHMARK: true
+  DETERMINISTIC: false
+  ENABLED: true
+GPUS: (0,1,2,3)
+OUTPUT_DIR: 'output'
+LOG_DIR: 'log'
+WORKERS: 4
+PRINT_FREQ: 100
+
+DATASET:
+  DATASET: lesion_dataset
+  ROOT: '../../data/IDRID/'
+
+  ## crop
+  # TRAIN_SET: 'train_crop.lst'
+  # TEST_SET: 'test_crop.lst'
+  # TEST_CROP_INFO_PATH: '../../data/IDRID/eval_crop.txt'
+
+  ## without crop
+  TRAIN_SET: 'train.lst'
+  TEST_SET: 'test.lst'
+
+  NUM_CLASSES: 4
+  CLASS_NAMES: [ 'EX', 'HE', 'SE', 'MA' ]
+  MEAN: [ 116.513, 56.437, 16.309 ]
+  STD: [ 80.206, 41.232, 13.293 ]
+MODEL:
+  NAME: seg_hrnet_indexnet
+  ALIGN_CORNERS: False
+  PRETRAINED: '../param/hrnetv2_w48_imagenet_pretrained.pth'
+  EXTRA:
+    FINAL_CONV_KERNEL: 1
+    STAGE1:
+      NUM_MODULES: 1
+      NUM_RANCHES: 1
+      BLOCK: BOTTLENECK
+      NUM_BLOCKS:
+        - 4
+      NUM_CHANNELS:
+        - 64
+      FUSE_METHOD: SUM
+    STAGE2:
+      NUM_MODULES: 1
+      NUM_BRANCHES: 2
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+      NUM_CHANNELS:
+        - 48
+        - 96
+      FUSE_METHOD: SUM
+    STAGE3:
+      NUM_MODULES: 4
+      NUM_BRANCHES: 3
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+        - 4
+      NUM_CHANNELS:
+        - 48
+        - 96
+        - 192
+      FUSE_METHOD: SUM
+    STAGE4:
+      NUM_MODULES: 3
+      NUM_BRANCHES: 4
+      BLOCK: BASIC
+      NUM_BLOCKS:
+        - 4
+        - 4
+        - 4
+        - 4
+      NUM_CHANNELS:
+        - 48
+        - 96
+        - 192
+        - 384
+      FUSE_METHOD: SUM
+TRAIN:
+  IMAGE_SIZE: [ 960, 1440 ]
+  MULTI_SCALE: true
+  RATIO_RANGE: [ 0.5, 2.0 ]
+  CROP_SIZE:  [ 960, 1440 ]
+  FLIP: true
+  ROTATE: true
+  BEGIN_EPOCH: 0
+  END_EPOCH: 3077   # 2308 * 13 ≈ 30000
+  EVAL_INTERVAL: 300  # ≈ 10
+
+  RESUME: true
+  OPTIMIZER: sgd
+  LR: 0.01
+  LR_MIN: 0.001
+  WD: 0.0005
+  MOMENTUM: 0.9
+
+  NESTEROV: false
+  DOWNSAMPLERATE: 1
+  IGNORE_LABEL: 0
+  SCALE_FACTOR: 16
+  BATCH_SIZE_PER_GPU: 1
+  SHUFFLE: true
+TEST:
+  IMAGE_SIZE: [ 960, 1440 ]
+  PAD_SIZE:   [ 960, 1440 ]  # ensure h % 32 == 0 and w % 32 == 0
+  BATCH_SIZE_PER_GPU: 1
+  FLIP_TEST: false    # unimplemented
+  MULTI_SCALE: false  # unimplemented
